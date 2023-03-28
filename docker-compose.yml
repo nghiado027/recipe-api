@@ -1,0 +1,15 @@
+#For development mode
+version: "3.11.2"
+
+services:
+  app:
+    build:
+      context: . #build from root
+      args:
+        - DEV=true #for development mode
+    ports: 
+      - "8000:8000" #map port from local pc to docker container
+    volumes:
+      - ./app:/app #map directory from system to container
+    command: >
+      sh -c "python manage.py runserver 0.0.0.0:8000"
