@@ -7,18 +7,19 @@ services:
   app:
     build:
 
-      #build from root
+      # build from root so this
+      # service know where dockerfile is
       context: .
 
-      #for development mode
+      # for development mode
       args:
         - DEV=true
     
-    #map port from local pc to docker container
+    # map port from local pc to docker container
     ports: 
       - "8000:8000"
     
-    #map directory from system to container
+    # map app directory from system to container
     volumes:
       - ./app:/app
     command: >
@@ -26,20 +27,23 @@ services:
              python manage.py migrate &&
              python manage.py runserver 0.0.0.0:8000"
 
-    #Setup enviroment for django app to connect database
+    # Setup enviroment for django app to connect database
     environment:
 
-      #name of the service database below (db)
+      # name of the service database below (db)
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
       - DB_PASS=123
 
-    #Add depend on to make app wait for db service to start
+    # Add depend on to make app wait for db service to start
     depends_on:
       - db
 
-  #Add database service
+  # Add database service
+  # Simple so no need to use Dockerfile
+  # just install a client to interact
+  # db on django container
   db:
     image: postgres:15-alpine
     volumes:
