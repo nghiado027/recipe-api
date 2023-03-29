@@ -1,2 +1,2 @@
-# recipe-api
+# Api
 Learning Django rest framework from Udemy tutorial
