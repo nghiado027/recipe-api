@@ -1,2 +1,2 @@
 # recipe-api
-API project
+Learning Django rest framework

@@ -2,14 +2,56 @@
 version: "3"
 
 services:
+
+  # name of services: app, db
   app:
     build:
-      context: . #build from root
+
+      #build from root
+      context: .
+
+      #for development mode
       args:
-        - DEV=true #for development mode
+        - DEV=true
+    
+    #map port from local pc to docker container
     ports: 
-      - "8000:8000" #map port from local pc to docker container
+      - "8000:8000"
+    
+    #map directory from system to container
     volumes:
-      - ./app:/app #map directory from system to container
+      - ./app:/app
     command: >
       sh -c "python manage.py runserver 0.0.0.0:8000"
+
+    #Setup enviroment for django app to connect database
+    environment:
+
+      #name of the service database below (db)
+      - DB_HOST=db
+      - DB_NAME=devdb
+      - DB_USER=devuser
+      - DB_PASS=123
+
+    #Add depend on to make app wait for db service to start
+    depends_on:
+      - db
+
+  #Add database service
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - dev-db-data:/var/lib/postgresql/data
+
+    #Set inital database configuration for new db service (should create a credential)
+    environment:
+      - POSTGRES_DB=devdb
+      - POSTGRES_USER=devuser
+      - POSTGRES_PASSWORD=123
+
+#Set up volumnes
+volumes:
+  
+  #name
+  dev-db-data:
+  
