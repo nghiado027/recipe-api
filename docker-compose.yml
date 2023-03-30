@@ -14,11 +14,11 @@ services:
       # for development mode
       args:
         - DEV=true
-    
+
     # map port from local pc to docker container
-    ports: 
+    ports:
       - "8000:8000"
-    
+
     # map app directory from system to container
     volumes:
       - ./app:/app
@@ -41,7 +41,6 @@ services:
       - db
 
   # Add database service
-  # Simple so no need to use Dockerfile
   # just install a client to interact
   # db on django container
   db:
@@ -55,9 +54,8 @@ services:
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=123
 
-#Set up volumnes
+# Set up volumnes
 volumes:
-  
-  #name
+
+  # name
   dev-db-data:
-  
