@@ -46,3 +46,22 @@ class ModelTests(TestCase):
             user = get_user_model().objects.create_user(email=email,
                                                         password='test')
             self.assertEqual(user.email, expected_email)
+
+    def test_create_new_user_without_email_must_raise_error(self):
+        """Test create user without email must raises an Error"""
+        with self.assertRaises(ValueError):
+            get_user_model().objects.create_user('', password='test123')
+
+    def test_create_superuser(self):
+        """Test create superuser"""
+        user = get_user_model().objects.create_superuser(
+            email='test@example.com',
+            password='testpassword',
+        )
+
+        # Field is_superuser provided by
+        # PermissionMixin
+        self.assertTrue(user.is_superuser)
+
+        # Check if a staff
+        self.assertTrue(user.is_staff)

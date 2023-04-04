@@ -14,6 +14,11 @@ class MyUserManager(BaseUserManager):
     def create_user(self, email, password=None, **other_fields):
         """Create and save user"""
 
+        # Check if email field is blank
+        # and raise error
+        if not email:
+            raise ValueError('User must type email address')
+
         # The way to access model that associated
         # with the manager
         # Call self.model will be the same as
@@ -34,6 +39,23 @@ class MyUserManager(BaseUserManager):
 
         return user
 
+    def create_superuser(self, email, password, **other_fields):
+        """Create and save superuser"""
+        user = self.create_user(
+            email=email,
+            password=password,
+            **other_fields
+        )
+
+        # is_superuser = full control any objects
+        user.is_superuser = True
+
+        # is_staff = log in as admin interface
+        # of our organize for example
+        user.is_staff = True
+        user.save(using=self._db)
+
+        return user
 
 # AbstractBaseUser contains only func
 # for authen system and no actual fields

@@ -1,2 +1,2 @@
 # Api
-Learning Django rest framework from Udemy tutorial
+Learning Django rest framework from tutorial
