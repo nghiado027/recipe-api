@@ -15,7 +15,7 @@ from django.contrib.auth import get_user_model
 class ModelTests(TestCase):
     """Test models."""
 
-    def test_create_user_with_email_successful(self):
+    def test_create_user_with_email_success(self):
         """Test create user by email success"""
         email = 'test@example.com'
         password = 'testpassword'
@@ -30,3 +30,19 @@ class ModelTests(TestCase):
         # Check
         self.assertEqual(user.email, email)
         self.assertTrue(user.check_password(password))
+
+    def test_new_user_with_email_normalized(self):
+        """Test user email normalized"""
+
+        # Domain must be lowercase
+        sample_emails = [
+            ['Test0@Example.com', 'Test0@example.com'],
+            ['test1@EXAMPLE.com', 'test1@example.com'],
+            ['test2@EXAMPLE.COM', 'test2@example.com'],
+            ['test3@example.COM', 'test3@example.com'],
+        ]
+
+        for email, expected_email in sample_emails:
+            user = get_user_model().objects.create_user(email=email,
+                                                        password='test')
+            self.assertEqual(user.email, expected_email)

@@ -21,7 +21,8 @@ class MyUserManager(BaseUserManager):
         # because this manager going to be assigned
         # to user class below
         user = self.model(
-            email = self.normalize_email(email),
+            # Add normailized eamil method
+            email=self.normalize_email(email),
             **other_fields
         )
 
@@ -59,5 +60,5 @@ class User(AbstractBaseUser, PermissionsMixin):
     # For replace username default field
     # with default user model to our custom
     # email field
-    # Deffine field for authen
+    # Deffine field for authen later
     USERNAME_FIELD = 'email'
