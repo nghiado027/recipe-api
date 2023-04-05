@@ -40,11 +40,33 @@ class MyAdmin(UserAdmin):
                 )
             }
         ),
-        (gettext_lazy('Dates'), {'fields': ('last_login',)})
+        (gettext_lazy('Dates'), {'fields': ('last_login',)}),
     )
 
     # Add read only fields
     readonly_fields = ['last_login']
+
+    # Add fieldses for user add page
+    add_fieldsets = (
+            (None, {
+
+                # Classes: asgin css classes
+                # in Django
+                'classes': ('wide',),
+
+                # Add user base on these
+                # fields (choose user -> new user)
+                'fields': (
+                    'email',
+                    'password1',
+                    'password2',
+                    'name',
+                    'is_active',
+                    'is_staff',
+                    'is_superuser',
+                )
+            }),
+    )
 
 # Register the model that use
 # this admin

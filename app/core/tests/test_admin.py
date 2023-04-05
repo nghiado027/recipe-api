@@ -69,3 +69,14 @@ class AdminPageTests(TestCase):
         # Check if sucess =
         # http response 200
         self.assertEqual(res.status_code, 200)
+
+    def test_create_user_page(self):
+        """Test createion of user's page work"""
+
+        # Add new user so no need sepcifyuser id
+        url = reverse('admin:core_user_add')
+        res = self.client.get(url)
+
+        # Check if sucess =
+        # http response 200
+        self.assertEqual(res.status_code, 200)
