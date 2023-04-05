@@ -16,6 +16,24 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+# Import spectacular to link url
+# to serve api document
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Define api/schema as a view of api schema
+    # to generate schema file
+    path('api/schema', SpectacularAPIView.as_view(), name='api-schema'),
+
+    # For document api link using swagger
+    # from api_schema url (define above)
+    path('api/docs', SpectacularSwaggerView.as_view(url_name='api-schema'),
+         name='api-doc',
+    ),
+
 ]
