@@ -1,5 +1,4 @@
-#For development mode
-version: "3"
+version: "3.9"
 
 services:
 
@@ -16,6 +15,7 @@ services:
         - DEV=true
 
     # map port from local pc to docker container
+    # HOST_PORT:CONTAINER_PORT
     ports:
       - "8000:8000"
 
