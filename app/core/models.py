@@ -65,6 +65,7 @@ class MyUserManager(BaseUserManager):
 # permission feature and others field
 # might need
 
+
 class User(AbstractBaseUser, PermissionsMixin):
     """User system"""
     email = models.EmailField(max_length=255, unique=True)

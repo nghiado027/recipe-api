@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy
 # Import customed models
 from . import models
 
+
 class MyAdmin(UserAdmin):
     """Custom admin page"""
 

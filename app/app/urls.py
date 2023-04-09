@@ -34,6 +34,5 @@ urlpatterns = [
     # For document api link using swagger
     # from api_schema url (define above)
     path('api/docs', SpectacularSwaggerView.as_view(url_name='api-schema'),
-         name='api-doc',
-    ),
+         name='api-doc'),
 ]

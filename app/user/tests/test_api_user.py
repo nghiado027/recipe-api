@@ -13,6 +13,7 @@ from rest_framework import status
 
 CREATE_USER_PATH = reverse('user:create')
 
+
 def create_user(**params):
     """Create a new user"""
     return get_user_model().objects.create_user(**params)
@@ -60,7 +61,6 @@ class PublicAPIUserTest(TestCase):
         # response
         self.assertNotIn('password', res.data)
 
-
     # Check if try to create user with email
     # address already doesnt work
     # This is an edge case that user not be generated
@@ -77,7 +77,6 @@ class PublicAPIUserTest(TestCase):
 
         # Check status of response
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     # Test password strength
     def test_password_strength(self):
