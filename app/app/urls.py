@@ -16,6 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 
+
 # Import spectacular to link url
 # to serve api document
 from drf_spectacular.views import (
@@ -35,5 +36,4 @@ urlpatterns = [
     path('api/docs', SpectacularSwaggerView.as_view(url_name='api-schema'),
          name='api-doc',
     ),
-
 ]

@@ -68,6 +68,7 @@ class MyAdmin(UserAdmin):
             }),
     )
 
+
 # Register the model that use
 # this admin
 admin.site.register(models.User, MyAdmin)
