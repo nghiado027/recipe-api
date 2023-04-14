@@ -14,7 +14,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+
+# This 'include' helper function
+# allow to add URLS from different app
+from django.urls import path, include
 
 
 # Import spectacular to link url
@@ -29,10 +32,14 @@ urlpatterns = [
 
     # Define api/schema as a view of api schema
     # to generate schema file
-    path('api/schema', SpectacularAPIView.as_view(), name='api-schema'),
+    path('api/schema/', SpectacularAPIView.as_view(), name='api-schema'),
 
     # For document api link using swagger
     # from api_schema url (define above)
-    path('api/docs', SpectacularSwaggerView.as_view(url_name='api-schema'),
+    path('api/docs/', SpectacularSwaggerView.as_view(url_name='api-schema'),
          name='api-doc'),
+
+    # Add user view to main app
+    # 'user.urls' is file path
+    path('api/user/', include('user.urls')),
 ]
