@@ -2,11 +2,11 @@
 Views for recipe API
 """
 
-from rest_framework import viewsets
+from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Recipe
+from core.models import Recipe, Tag
 from recipe import serializers
 
 
@@ -68,3 +68,28 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
         """Create recipe"""
         # This is a current authenticated user
         serializer.save(user=self.request.user)
+
+
+# Implement basic CRUD so just leverage viewset
+# base class
+# GenericViewSet allow to mixin, it has view set
+# functionality to design a particular API ?
+# mixins.ListModelMixin for update (the same as
+# destroy, list, ...) check mixin with model ?
+class TagViewSet(mixins.ListModelMixin,
+                 mixins.UpdateModelMixin,
+                 mixins.DestroyModelMixin,
+                 viewsets.GenericViewSet):
+    """Manage tags """
+    serializer_class = serializers.TagSerializer
+    queryset = Tag.objects.all()
+
+    # Must authenticated
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    # Override get_queryset method to make sure
+    # return only queryset object for authenticated
+    # user by default.
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user).order_by('name')

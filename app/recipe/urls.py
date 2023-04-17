@@ -21,7 +21,7 @@ router = DefaultRouter()
 # supported, it will create and register endpoints for
 # each of those options)
 router.register('recipes', views.RecipeAPIViewSet)
-
+router.register('tags', views.TagViewSet)
 # Name for reverse lookup
 app_name = 'recipe'
 

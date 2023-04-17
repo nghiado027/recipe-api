@@ -8,7 +8,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Recipe
+from core.models import Recipe, Tag
 
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
@@ -165,3 +165,109 @@ class PrivateAPIRecipeTest(TestCase):
         # User assigned to create recipe API must
         # matched the user we authenticated (in setUp)
         self.assertEqual(recipe.user, self.user)
+
+    def test_create_recipe_with_new_tag(self):
+        """Test create a recipe with new tag"""
+        sample_test = {
+            'title': 'Sample recipe title',
+            'minute_to_make_recipe': 10,
+            'price': Decimal('4.22'),
+            'description': 'sample recipe description',
+            'link': 'https://example.com/recipe.pdf',
+            'tags': [{'name': 'Viet Nam'}, {'name': 'Breakfast'}],
+        }
+        res = self.client.post(URL_RECIPE, sample_test, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)  # because create 1 recipe
+
+        # Test 2 tags must exists
+        self.assertEqual(recipes[0].tags.count(), 2)  # we assigned 2 tags
+        for tag in sample_test['tags']:
+            exists_tag = recipes[0].tags.filter(
+                name=tag['name'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists_tag)
+
+    def test_create_recipe_with_existing_tag(self):
+        """Test create a recipe with existing tag"""
+        tag_example = Tag.objects.create(user=self.user, name='Viet Nam')
+        sample_test = {
+            'title': 'Sample recipe title VN',
+            'minute_to_make_recipe': 75,
+            'price': Decimal('4.22'),
+            'description': 'sample recipe description',
+            'link': 'https://example.com/recipe.pdf',
+            'tags': [{'name': 'Viet Nam'}, {'name': 'Breakfast'}],
+        }
+        res = self.client.post(URL_RECIPE, sample_test, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+
+        recipes = Recipe.objects.filter(user=self.user)
+        self.assertEqual(recipes.count(), 1)
+
+        # Test 2 tags must exists
+        self.assertEqual(recipes[0].tags.count(), 2)
+
+        self.assertIn(tag_example, recipes[0].tags.all())
+
+        for tag in sample_test['tags']:
+            exists_tag = recipes[0].tags.filter(
+                name=tag['name'],
+                user=self.user,
+            ).exists()
+            self.assertTrue(exists_tag)
+
+    def test_create_tag_when_update(self):
+        """Test create a tag when update a recipe"""
+        recipe = create_recipe(user=self.user)
+
+        sample_tag = {'tags': [{'name': 'dinner'}]}
+        url = detail_url(recipe.id)
+
+        # Using patch to update tags from recipe id
+        # should not refresh DB when using ManyToManyField ?
+        # (bc essentially its create new query under the hood)
+        # When Calling recipe.tag.all, its going to do a seperate
+        # query and it's going to retrieve all the fresher objects
+        # for particular recipe. Its arent cached when first create
+        # the recipes so there's no need to refresh update on recipe
+        # instance
+        res = self.client.patch(url, sample_tag, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        new_tag = Tag.objects.get(user=self.user, name='dinner')
+        self.assertIn(new_tag, recipe.tags.all())
+
+    def test_update_recipe_assign_tag(self):
+        """Test assign an existing tag when update a recipe"""
+        tag_default = Tag.objects.create(user=self.user, name='Dinner')
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag_default)
+
+        tag_update = Tag.objects.create(user=self.user, name='abc')
+        sample = {'tags': [{'name': 'abc'}]}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, sample, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn(tag_update, recipe.tags.all())
+        self.assertNotIn(tag_default, recipe.tags.all())
+
+    def test_clear_recipe_tags(self):
+        """Test clear recipes tags"""
+        tag = Tag.objects.create(user=self.user, name='tag1')
+        recipe = create_recipe(user=self.user)
+        recipe.tags.add(tag)
+
+        sample = {'tags': []}
+        url = detail_url(recipe.id)
+        res = self.client.patch(url, sample, format='json')
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(recipe.tags.count(), 0)

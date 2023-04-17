@@ -75,3 +75,4 @@ class MyAdmin(UserAdmin):
 # Specify custom admin_class of user is MyAdmin
 admin.site.register(models.User, MyAdmin)
 admin.site.register(models.Recipe)
+admin.site.register(models.Tag)
