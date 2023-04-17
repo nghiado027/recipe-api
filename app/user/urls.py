@@ -9,6 +9,9 @@ from user import views
 # In tests/test_api_user.py we define
 # that REATE_USER_PATH = reverse('user:create')
 # so app name must be 'user'
+# Whenever the reverse(...) function get
+# executed, Django looking for an
+# application namespace first, than any other
 app_name = 'user'
 
 # Mapping path to view

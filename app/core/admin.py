@@ -70,6 +70,8 @@ class MyAdmin(UserAdmin):
     )
 
 
-# Register the model that use
+# Register the model that used (in)
 # this admin
+# Specify custom admin_class of user is MyAdmin
 admin.site.register(models.User, MyAdmin)
+admin.site.register(models.Recipe)

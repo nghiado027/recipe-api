@@ -7,12 +7,12 @@ View of user API
 # GenericsAPIView
 # authentication and permission for token
 from rest_framework import generics, authentication, permissions
-from user.serializer import UserSerializer
+from user.serializers import UserSerializer
 
 # For token
-from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.views import ObtainAuthToken  # for login
 from rest_framework.settings import api_settings
-from user.serializer import AuthTokenSerializer  # import serializer of token
+from user.serializers import AuthTokenSerializer  # import serializer of token
 
 
 # Create API handles HTTP post request
@@ -48,7 +48,12 @@ class CreateTokenView(ObtainAuthToken):
 class ManageUserView(generics.RetrieveUpdateAPIView):
     """Manage authenticated user profile"""
     serializer_class = UserSerializer
+
+    # How do you know that the user is the user say they are ?
     authentication_classes = [authentication.TokenAuthentication]
+
+    # Who the user is, a particular user is allowed to do in system ?
+    # must authenticated to use this api
     permission_classes = [permissions.IsAuthenticated]
 
     # Override get_object() method

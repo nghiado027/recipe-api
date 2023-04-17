@@ -10,7 +10,6 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
-from core.models import User
 
 # URL endpoint create user
 URL_CREATE_USER = reverse('user:create')
@@ -26,7 +25,7 @@ ME_URL = reverse('user:me')
 # Helper function to create user for testing
 def create_user(**params):
     """Create a new user"""
-    return User.objects.create_user(**params)
+    return get_user_model().objects.create_user(**params)
 
 
 # Public: unauthen requests, request
@@ -61,7 +60,7 @@ class PublicAPIUserTest(TestCase):
         # Get user by email
         # If user created success it
         # should return a user
-        user = User.objects.get(email=sample_test['email'])
+        user = get_user_model().objects.get(email=sample_test['email'])
 
         # Check corect user password
         # created
@@ -110,7 +109,9 @@ class PublicAPIUserTest(TestCase):
         # and raise DoesNotExist
         # User .filter() for return multiple
         # objects (queryset ?)
-        user_queryset = User.objects.filter(email=sample_test['email'])
+        user_queryset = get_user_model().objects.filter(
+            email=sample_test['email']
+        )
 
         # Confirm that user doesnt exist
         # in database

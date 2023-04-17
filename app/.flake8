@@ -6,3 +6,4 @@ exclude =
     manage.py,
     settings.py
     */migrations
+    app/settings.py

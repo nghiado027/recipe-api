@@ -40,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
     # validation (in this case is name, email. pass)
     def create(self, validated_data):
         """Create a user with hashed password"""
-        return User.objects.create_user(**validated_data)
+        return get_user_model().objects.create_user(**validated_data)
 
     # Purpose of override is just configure the password
     # instance is the model instance going to be updated

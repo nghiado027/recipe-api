@@ -11,6 +11,18 @@ from django.test import TestCase
 # will be automatically updated everywhere in code
 from django.contrib.auth import get_user_model
 
+from core.models import Recipe, Tag
+from decimal import Decimal
+
+
+# Helper function return new user
+def create_user():
+    """Create and return a test user"""
+    return get_user_model().objects.create_user(
+        email='TestUser@example.com',
+        password='Testpassword123'
+    )
+
 
 class ModelTests(TestCase):
     """Test models."""
@@ -43,8 +55,10 @@ class ModelTests(TestCase):
         ]
 
         for email, expected_email in sample_emails:
-            user = get_user_model().objects.create_user(email=email,
-                                                        password='test')
+            user = get_user_model().objects.create_user(
+                email=email,
+                password='test',
+            )
             self.assertEqual(user.email, expected_email)
 
     def test_create_new_user_without_email_must_raise_error(self):
@@ -54,14 +68,41 @@ class ModelTests(TestCase):
 
     def test_create_superuser(self):
         """Test create superuser"""
-        user = get_user_model().objects.create_superuser(
+        sample_test = get_user_model().objects.create_superuser(
             email='test@example.com',
             password='testpassword',
         )
 
         # Field is_superuser provided by
         # PermissionMixin
-        self.assertTrue(user.is_superuser)
+        self.assertTrue(sample_test.is_superuser)
 
         # Check if a staff
-        self.assertTrue(user.is_staff)
+        self.assertTrue(sample_test.is_staff)
+
+    def test_create_recipe(self):
+        """Test create a recipe assign with user successful"""
+
+        # Create user that recipe object assigned to
+        sample_user = get_user_model().objects.create_user(
+            email='test@example.com',
+            password='testpassword',
+        )
+
+        recipe = Recipe.objects.create(
+            user=sample_user,  # User that recipe belonged to
+            title="Sample recipe title",
+            minute_to_make_recipe=5,
+            price=Decimal('5.50'),
+            description='Sample recipe description',
+        )
+
+        # Check the string representation of recipe
+        self.assertEqual(str(recipe), recipe.title)
+
+    def test_create_tag(self):
+        """Test create a tag successfully"""
+        user = create_user()
+        tag = Tag.objects.create(user=user, name='tag1')
+
+        self.assertEqual(str(tag), tag.name)

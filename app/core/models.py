@@ -7,6 +7,8 @@ from django.contrib.auth.models import (
     AbstractBaseUser, BaseUserManager, PermissionsMixin
 )
 
+from django.conf import settings
+
 
 class MyUserManager(BaseUserManager):
     """My custom Manager of users"""
@@ -57,6 +59,7 @@ class MyUserManager(BaseUserManager):
 
         return user
 
+
 # AbstractBaseUser contains only func
 # for authen system and no actual fields
 # create user without reuse email,
@@ -64,8 +67,6 @@ class MyUserManager(BaseUserManager):
 # PermissionsMixin contains func for
 # permission feature and others field
 # might need
-
-
 class User(AbstractBaseUser, PermissionsMixin):
     """User system"""
     email = models.EmailField(max_length=255, unique=True)
@@ -86,3 +87,39 @@ class User(AbstractBaseUser, PermissionsMixin):
     # email field
     # Deffine field for authen later
     USERNAME_FIELD = 'email'
+
+
+# Use model base class for recipe
+class Recipe(models.Model):
+    """Recipe model"""
+
+    # Foreign key is User (better is id)
+    user = models.ForeignKey(
+        # Reference settings from app.settings.py
+        # to apply changes from user model (AUTH_USER_MODEL)
+        # search more settings.AUTH_USER_MODEL vs get_user_model
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+    title = models.CharField(max_length=255)
+    description = models.TextField(max_length=255)  # for larger strings
+    minute_to_make_recipe = models.IntegerField()
+    price = models.DecimalField(max_digits=6, decimal_places=2)
+    link = models.CharField(max_length=255, blank=True)
+    tags = models.ManyToManyField(to='Tag')
+
+    # To string method to return title
+    def __str__(self):
+        return self.title
+
+
+class Tag(models.Model):
+    """Tag for recipe"""
+    name = models.CharField(max_length=255)
+    user = models.ForeignKey(
+        to=settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+    )
+
+    def __str__(self):
+        return self.name
