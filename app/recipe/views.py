@@ -6,7 +6,7 @@ from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
 
@@ -43,6 +43,7 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
 
         # Call specific user
         # Retrive all object then filter by user (must optimize ?)
+        # We want user manage only their recipe (create, view, update)
         return self.queryset.filter(user=self.request.user).order_by('id')
 
     # Override this method to let DRF call
@@ -76,14 +77,14 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
 # functionality to design a particular API ?
 # mixins.ListModelMixin for update (the same as
 # destroy, list, ...) check mixin with model ?
-class TagViewSet(mixins.ListModelMixin,
-                 mixins.UpdateModelMixin,
-                 mixins.DestroyModelMixin,
-                 viewsets.GenericViewSet):
-    """Manage tags """
-    serializer_class = serializers.TagSerializer
-    queryset = Tag.objects.all()
+# In this project, we let user create tag, ingredient
+# through recipe API
+class BaseRecipeAtributeViewSet(mixins.ListModelMixin,
+                                mixins.UpdateModelMixin,
+                                mixins.DestroyModelMixin,
+                                viewsets.GenericViewSet):
 
+    """Base viewset recipe atribute (tag, ingredients)"""
     # Must authenticated
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -93,3 +94,16 @@ class TagViewSet(mixins.ListModelMixin,
     # user by default.
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user).order_by('name')
+
+
+class TagViewSet(BaseRecipeAtributeViewSet):
+    """Manage tags """
+    serializer_class = serializers.TagSerializer
+    queryset = Tag.objects.all()
+
+
+class IngredientViewSet(BaseRecipeAtributeViewSet):
+    """Manage ingredient"""
+
+    serializer_class = serializers.IngredientSerializer
+    queryset = Ingredient.objects.all()

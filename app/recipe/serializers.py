@@ -2,9 +2,19 @@
 Serializers for recipe API
 """
 from rest_framework import serializers
-from core.models import Recipe, Tag
+from core.models import Recipe, Tag, Ingredient
 
 from django.utils.translation import gettext # noqa
+
+
+# Ingredient serializer
+class IngredientSerializer(serializers.ModelSerializer):
+    """Serializer for ingredient"""
+
+    class Meta:
+        model = Ingredient
+        fields = ['id', 'name']
+        read_only_fields = ['id']
 
 
 # Tag serializer
@@ -22,14 +32,17 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     # This will becom nested serializer
     tags = TagSerializer(many=True, required=False)
+    ingredients = IngredientSerializer(many=True, required=False)
 
     class Meta:
         model = Recipe
         fields = ['id', 'title', 'minute_to_make_recipe',
-                  'price', 'link', 'tags']
+                  'price', 'link', 'tags', 'ingredients']
         read_only_fields = ['id']
 
     # Helper function for get_or_create
+    # Single underscore for internal user (Pep 8)
+    # use by other method in this class
     def _get_or_create_tags(self, tags, recipe):
         """Getting or creating tags as a method"""
 
@@ -53,6 +66,18 @@ class RecipeSerializer(serializers.ModelSerializer):
             )
             recipe.tags.add(obj)
 
+    def _get_or_create_ingredients(self, ingredients, recipe):
+        """Getting or creating ingredients as a method"""
+
+        authen_user = self.context['request'].user
+
+        for ingredient in ingredients:
+            obj, _ = Ingredient.objects.get_or_create(
+                user=authen_user,
+                **ingredient
+            )
+            recipe.ingredients.add(obj)
+
     # Override to allow to change tag
     # bc nested serializer default is read_only_field
     # mean can read the values but can't create items
@@ -63,6 +88,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         # Remove and retrive tags data from validated_data
         # To ensure pop return as list (tags), put '[]'
         tags = validated_data.pop('tags', [])
+        ingredients = validated_data.pop('ingredients', [])
 
         # Create a recipe with remain data
         # Tags cannot directly added to in Recipe model
@@ -73,6 +99,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         recipe = Recipe.objects.create(**validated_data)
 
         self._get_or_create_tags(tags, recipe)
+        self._get_or_create_ingredients(ingredients, recipe)
 
         return recipe
 
@@ -85,12 +112,17 @@ class RecipeSerializer(serializers.ModelSerializer):
         # If tags in validated data is empty,
         # assign tags variable to None
         tags = validated_data.pop('tags', None)
+        ingredients = validated_data.pop('ingredients', None)
 
         if tags is not None:
             # clear all tags and replace with
             # validated_data tag (bc its just update)
             instance.tags.clear()
             self._get_or_create_tags(tags, instance)
+
+        if ingredients is not None:
+            instance.ingredients.clear()
+            self._get_or_create_ingredients(ingredients, instance)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
