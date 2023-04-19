@@ -1,6 +1,8 @@
 """
 DB models
 """
+import uuid
+import os
 
 from django.db import models
 from django.contrib.auth.models import (
@@ -8,6 +10,25 @@ from django.contrib.auth.models import (
 )
 
 from django.conf import settings
+
+
+# Function recipe_image_file_path to generate
+# the path to image being uploaded
+# intance: instance of the object image being uploaded to
+# filename: the name of the original file thats been uploaded
+def recipe_image_file_path(instance, filename):
+    """Generate file path for new recipe image"""
+
+    # Extract to get the filename (extract
+    # extension of that following like .jpg,..)
+    extension = os.path.splitext(filename)[1]
+
+    # Create own file using generated uuid and extension
+    # following
+    new_filename = f'{uuid.uuid4}{extension}'
+
+    # Create full path base on os (Windows, Linux)
+    return os.path.join('uploads', 'recipe', new_filename)
 
 
 class MyUserManager(BaseUserManager):
@@ -108,6 +129,12 @@ class Recipe(models.Model):
     link = models.CharField(max_length=255, blank=True)
     tags = models.ManyToManyField(to='Tag')
     ingredients = models.ManyToManyField(to='Ingredient')
+
+    # upload_to define just the name of the function
+    # not the function ? (django doc)
+    # Specify the function allow to generate a path name
+    # base on the in4 passed in to recipe when upload
+    image = models.ImageField(null=True, upload_to=recipe_image_file_path)
 
     # To string method to return title
     def __str__(self):

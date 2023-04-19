@@ -127,7 +127,7 @@ USE_TZ = True
 
 # Add media url
 STATIC_URL = '/static/static/'
-MEDIA_URL = '/static/media'
+MEDIA_URL = '/static/media/'
 
 # Add path to store media in system
 MEDIA_ROOT = 'vol/web/media'

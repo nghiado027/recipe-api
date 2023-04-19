@@ -1,7 +1,9 @@
 """
 Test cases for models
 """
-
+# Tool use for mock things => can replace
+# some behavior for purpose
+from unittest.mock import patch
 # Import base class for tests
 from django.test import TestCase
 
@@ -11,7 +13,7 @@ from django.test import TestCase
 # will be automatically updated everywhere in code
 from django.contrib.auth import get_user_model
 
-from core.models import Recipe, Tag, Ingredient
+from core.models import Recipe, Tag, Ingredient, recipe_image_file_path
 from decimal import Decimal
 
 
@@ -116,3 +118,27 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(ingredient), ingredient.name)
+
+    # Test create a path to the file
+    # in our system, uuid for unique name
+    # Add decorate to patch uid function that
+    # import into our model to replace behavor
+    # of this uid, it will generate random string
+    # everytime generate a unique identifier
+    # dont need this (real time identifier) bc it
+    # will quiet hard to determine what unique identifier
+    # created in out test so
+    # Using Mock behavior to define a constant uuid
+    # just for testing (mock_uuid.return_value)
+    @patch('core.models.uuid.uuid4')
+    def test_recipe_file_name_uuid(self, mock_uuid):
+        """Test generate image path"""
+        uuid = 'test-uuid'
+        mock_uuid.return_value = uuid
+
+        # Function recipe_image_file_path to generate
+        # the path to image being uploaded
+        file_path = recipe_image_file_path(None, 'example.jpg')
+
+        # Mean that we replace the name example to uuid to store
+        self.assertEqual(file_path, f'uploads/recipe/{uuid}.jpg')
