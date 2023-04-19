@@ -25,7 +25,7 @@ def recipe_image_file_path(instance, filename):
 
     # Create own file using generated uuid and extension
     # following
-    new_filename = f'{uuid.uuid4}{extension}'
+    new_filename = f'{uuid.uuid4()}{extension}'
 
     # Create full path base on os (Windows, Linux)
     return os.path.join('uploads', 'recipe', new_filename)
