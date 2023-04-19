@@ -22,6 +22,9 @@ services:
     # map app directory from system to container
     volumes:
       - ./app:/app
+      # Map /vol/web in docker image to volumn
+      # dev-static-data created below (last line)
+      - dev-static-data:/vol/web
     command: >
       sh -c "python manage.py wait_for_db &&
              python manage.py migrate &&
@@ -54,8 +57,9 @@ services:
       - POSTGRES_USER=devuser
       - POSTGRES_PASSWORD=123
 
-# Set up volumnes
+# Set up volumnes docker
 volumes:
 
   # name
   dev-db-data:
+  dev-static-data:

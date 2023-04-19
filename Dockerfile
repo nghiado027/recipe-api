@@ -15,7 +15,7 @@ ENV DEV=false
 # create venv and upgrade pip, install requirements, add user in alpine image
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
-    #add package & install (postgresql client), use --virtual to remove later then install
+    # add package & install (postgresql client), use --virtual to remove later then install
     apk add --update --no-cache postgresql-client jpeg-dev && \
     apk add --update --no-cache --virtual .tmp-build-deps \
         build-base postgresql-dev musl-dev zlib zlib-dev && \
@@ -23,14 +23,20 @@ RUN python -m venv /py && \
     if [ $DEV="true" ]; \
         then /py/bin/pip install -r /tmp/requirements.dev.txt; \
     fi && \
-    #cleaning
+    # cleaning
     rm -rf /tmp && \
     apk del .tmp-build-deps && \
-    #add user
+    # add user
     adduser \
-    --disabled-password \
-    --no-create-home \
-    django-user
+        --disabled-password \
+        --no-create-home \
+        django-user && \
+    # Add media directory to let user own this (instead of root user)
+    mkdir -p /vol/web/media && \
+    mkdir -p /vol/web/static && \
+    # Assign ownership to /vol
+    chown -R django-user /vol && \
+    chmod -R 755 /vol
 
 #update python path enviroment
 ENV PATH="/py/bin:$PATH"

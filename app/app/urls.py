@@ -19,6 +19,9 @@ from django.contrib import admin
 # allow to add URLS from different app
 from django.urls import path, include
 
+# For static media file
+from django.conf.urls.static import static
+from django.conf import settings
 
 # Import spectacular to link url
 # to serve api document
@@ -46,3 +49,11 @@ urlpatterns = [
     # Add recipe
     path('api/recipe/', include('recipe.urls'))
 ]
+
+# For debug mode, serving media file from local
+# In production local files will not accessible (must)
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT,
+    )
