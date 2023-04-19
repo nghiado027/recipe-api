@@ -16,9 +16,9 @@ ENV DEV=false
 RUN python -m venv /py && \
     /py/bin/pip install --upgrade pip && \
     #add package & install (postgresql client), use --virtual to remove later then install
-    apk add --update --no-cache postgresql-client && \
+    apk add --update --no-cache postgresql-client jpeg-dev && \
     apk add --update --no-cache --virtual .tmp-build-deps \
-        build-base postgresql-dev musl-dev && \
+        build-base postgresql-dev musl-dev zlib zlib-dev && \
     /py/bin/pip install -r /tmp/requirements.txt && \
     if [ $DEV="true" ]; \
         then /py/bin/pip install -r /tmp/requirements.dev.txt; \
