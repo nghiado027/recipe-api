@@ -12,6 +12,12 @@ from core.models import Recipe, Tag, Ingredient
 
 from recipe.serializers import RecipeSerializer, RecipeDetailSerializer
 
+# For image test
+import tempfile
+import os
+
+from PIL import Image
+
 # List of recipe a
 URL_RECIPE = reverse('recipe:recipe-list')
 
@@ -40,6 +46,12 @@ def create_recipe(user, **params):
 def detail_url(recipe_id):
     """Create recipe detail URL"""
     return reverse('recipe:recipe-detail', args=[recipe_id])
+
+
+# Helper function to generate upload image endpoint
+def image_upload_url(recipe_id):
+    """Create image upload URL"""
+    return reverse('recipe:recipe-upload-image', args=[recipe_id])
 
 
 # Test unauthenticate request (same as user api)
@@ -395,3 +407,70 @@ class PrivateAPIRecipeTest(TestCase):
         res = self.client.patch(url, sample, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(recipe.ingredients.count(), 0)
+
+
+# For test upload images
+class ImageUploadTests(TestCase):
+    """Tests for image upload API"""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = get_user_model().objects.create_user(
+            email='Test@example.com',
+            password='testpassword123',
+        )
+
+        # Authenticate user
+        self.client.force_authenticate(self.user)
+        self.recipe = create_recipe(user=self.user)
+
+    # setUp running before the test and tearDown
+    # run after the test
+    # Delete image after every test for not buildings up
+    # database ?
+    def tearDown(self):
+        self.recipe.image.delete()
+
+    def test_upload_image(self):
+        """Test upload image to recipe"""
+        url = image_upload_url(self.recipe.id)
+
+        # Create tempoary file (with then it will clean up)
+        # Create tempoary image file to test upload to
+        # endpoint
+        # Image file that a user will be uploading (like
+        # upload from their local machine)
+        # When upload that image, this will be a new image file
+        # and store that version of image on the server
+        with tempfile.NamedTemporaryFile(suffix='.jpg') as image_file:
+
+            # Create a new image and save as  tempoary file that created
+            img = Image.new('RGB', (10, 10))
+            img.save(image_file, format='JPEG')
+
+            # Need seek back to the begining of the file
+            # to upload image (seek the pointer)
+            image_file.seek(0)
+
+            # Generate sample payload assign image field is the image file
+            # that we want to upload using multipart format ?
+            sample = {'image': image_file}
+            res = self.client.post(url, sample, format='multipart')
+
+        self.recipe.refresh_from_db()
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        # Check image field in response
+        self.assertIn('image', res.data)
+
+        # Check path of image exsist in system
+        self.assertTrue(os.path.exists(self.recipe.image.path))
+
+    def test_upload_image_with_bad_request(self):
+        """Test upload invalid image"""
+        url = image_upload_url(self.recipe.id)
+        sample = {'image': 'NO_IMAGE'}
+
+        res = self.client.post(url, sample, format='multipart')
+
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)

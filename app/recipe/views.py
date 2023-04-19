@@ -2,12 +2,15 @@
 Views for recipe API
 """
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 
 from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
+
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 
 class RecipeAPIViewSet(viewsets.ModelViewSet):
@@ -55,6 +58,10 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
         # is enough
         if self.action == 'list':
             return serializers.RecipeSerializer
+        # For upload image, we define a
+        # custom action
+        elif self.action == 'upload_image':
+            return serializers.RecipeDetailImageSerializer
 
         return self.serializer_class
 
@@ -69,6 +76,32 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
         """Create recipe"""
         # This is a current authenticated user
         serializer.save(user=self.request.user)
+
+    # Custom action for upload image ?
+    # Using action decorators let us specify HTTP method support for
+    # this custom action
+    # detail=True: apply to the detail portion of our model viewset, mean
+    # that specific id of recipe, we want apply this custom action
+    # to detail endpoint ?
+    # not detail ~ list view, generic list of the recipe
+    # url_path = custom url path for our action
+    @action(methods=['POST'], detail=True, url_path='upload-image')
+    def upload_image(self, request, pk=None):
+
+        # Get recipe object by the primary key
+        # we specify in this action
+        recipe = self.get_object()
+
+        # get_serializer take class in get_serializer_class that
+        # we override to get Image serializer class for this action
+        serialier = self.get_serializer(recipe, data=request.data)
+
+        # Check if valid then save and response
+        if serialier.is_valid():
+            serialier.save()
+            return Response(data=serialier.data, status=status.HTTP_200_OK)
+
+        return Response(serialier.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Implement basic CRUD so just leverage viewset
