@@ -2,12 +2,13 @@
 Tests Tag API
 """
 
+from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Tag
+from core.models import Tag, Recipe
 from recipe.serializers import TagSerializer
 
 
@@ -98,3 +99,59 @@ class PrivateAPITagTest(TestCase):
         res = self.client.delete(url)
 
         self.assertEqual(res.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_filter_ingredients_associated_with_recipes(self):
+        """Test list ingredients that associate with recipes"""
+
+        tag1 = Tag.objects.create(user=self.user, name='tag1')
+        tag2 = Tag.objects.create(user=self.user, name='tag2')
+
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Default recipe title',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe description',
+            link='https://example.com/recipe.pdf',
+        )
+
+        recipe.tags.add(tag1)
+
+        serializer1 = TagSerializer(tag1)
+        serializer2 = TagSerializer(tag2)
+
+        res = self.client.get(URL_TAGS, {'ids_assigned': tag1.id})
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertNotIn(serializer2.data, res.data)
+
+    def test_filter_tags_distinct(self):
+        """Test filterd tags must (get) uniquely"""
+
+        tag = Tag.objects.create(user=self.user, name='T1')
+        Tag.objects.create(user=self.user, name='T2')
+
+        recipe1 = Recipe.objects.create(
+            user=self.user,
+            title='Title 12',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe 12 description',
+            link='https://example.com/recipe.pdf'
+        )
+
+        recipe2 = Recipe.objects.create(
+            user=self.user,
+            title='Title 22',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe 22 description',
+            link='https://example.com/recipe.pdf'
+        )
+
+        recipe1.tags.add(tag)
+        recipe2.tags.add(tag)
+
+        res = self.client.get(URL_TAGS, {'ids_assigned': tag.id})
+
+        self.assertEqual(len(res.data), 1)

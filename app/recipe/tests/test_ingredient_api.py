@@ -2,12 +2,13 @@
 Tests for ingredient API
 """
 
+from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
-from core.models import Ingredient
+from core.models import Ingredient, Recipe
 from recipe.serializers import IngredientSerializer
 
 
@@ -113,3 +114,58 @@ class PrivateAPIIngredientTest(TestCase):
         ingredients = Ingredient.objects.filter(user=self.user)
 
         self.assertEqual(len(ingredients), 0)
+
+    def test_filter_ingredients_associated_with_recipes(self):
+        """Test list ingredients that associate with recipes"""
+        ingredient1 = Ingredient.objects.create(user=self.user, name='I1')
+        ingredient2 = Ingredient.objects.create(user=self.user, name='I2')
+
+        recipe = Recipe.objects.create(
+            user=self.user,
+            title='Default recipe title',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe description',
+            link='https://example.com/recipe.pdf'
+        )
+
+        recipe.ingredients.add(ingredient1)
+
+        s1 = IngredientSerializer(ingredient1)
+        s2 = IngredientSerializer(ingredient2)
+
+        # Pass param 'assigned_only'
+        res = self.client.get(URL_INGREDIENT, {'ids_assigned': s1.data['id']})
+
+        self.assertIn(s1.data, res.data)
+        self.assertNotIn(s2.data, res.data)
+
+    def test_filter_ingredients_distinct(self):
+        """Test filterd ingredients must (get) uniquely"""
+        ingredient = Ingredient.objects.create(user=self.user, name="I3")
+        Ingredient.objects.create(user=self.user, name="I4")
+
+        recipe1 = Recipe.objects.create(
+            user=self.user,
+            title='Title 12',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe 12 description',
+            link='https://example.com/recipe.pdf'
+        )
+
+        recipe2 = Recipe.objects.create(
+            user=self.user,
+            title='Title 22',
+            minute_to_make_recipe=1,
+            price=Decimal('1.0'),
+            description='Default recipe 22 description',
+            link='https://example.com/recipe.pdf'
+        )
+
+        recipe1.ingredients.add(ingredient)
+        recipe2.ingredients.add(ingredient)
+
+        res = self.client.get(URL_INGREDIENT, {'ids_assigned': recipe1.id})
+
+        self.assertEqual(len(res.data), 1)

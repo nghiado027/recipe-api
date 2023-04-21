@@ -9,10 +9,51 @@ from rest_framework.permissions import IsAuthenticated
 from core.models import Recipe, Tag, Ingredient
 from recipe import serializers
 
+# For custom action
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+# For filtering ?
+from drf_spectacular.utils import (
+    extend_schema_view,
+    extend_schema,
+    OpenApiParameter,
+    OpenApiTypes
+)
 
+
+# Decorated to extend the auto generated
+# schema that created by Django rest spectacular ?
+@extend_schema_view(
+
+    # Define list to extend schema for the
+    # list endpoint (we add these filter tag and ingredient)
+    list=extend_schema(
+
+        # Define params that can be passed to the requests that are made
+        # to the list API for this view, we using OpenAPI paramters provided
+        # by drf sepctacular allow us to specify details of a paramter
+        # accepted in API request ?
+        parameters=[
+            OpenApiParameter(
+
+                # Define name to to pass in to filter
+                name='tags',
+                # Accept params as string (IDs string) bc we
+                # want to seperated to list of intergers (we
+                # convert in this view class)
+                type=OpenApiTypes.STR,
+                # For documentation
+                description='Seperated by comma list of tag IDS to filter',
+            ),
+            OpenApiParameter(
+                'ingredients',
+                OpenApiTypes.STR,
+                description='Seperated comma list of ingredient IDS to filter',
+            ),
+        ]
+    )
+)
 class RecipeAPIViewSet(viewsets.ModelViewSet):
     """View for manage recipe APIs as list and id"""
     serializer_class = serializers.RecipeDetailSerializer
@@ -37,6 +78,13 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+    # List paramters from list of integer (id)
+    # to accept filter arguments as a list of IDs
+    # as comma seperated string
+    def _params_to_list_ints(self, query_string):
+        """Convert list of strings to integers"""
+        return list(map(int, query_string.split(',')))
+
     # Get list of recipes base on authenticated user (authen above)
     # Override this get_queryset to get the current logged user using
     # self.request.user ? (define in AUTH_USER_MODEL)
@@ -44,10 +92,38 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Retrieve recipes for this authenticated user"""
 
+        # Get by comman queryset ?tags=1,2,3&ingredients=1,2,3
+        # using query_params ? (request.query_params ~ request.GET)
+        # https://www.django-rest-framework.org/api-guide/requests/
+        tags = self.request.query_params.get('tags')
+        ingredients = self.request.query_params.get('ingredients')
+
+        # Define a queryset
+        queryset = self.queryset
+
+        # Filter ManyToMany Fields ?
+        # We make filter is an optional
+        if tags:
+            # Convert params from string to list in as
+            # defined that represent primary key
+            tag_ids = self._params_to_list_ints(tags)
+
+            # Double underscore in queryset mean Field lookup ?
+            queryset = queryset.filter(tags__id__in=tag_ids)
+        if ingredients:
+            ingredient_ids = self._params_to_list_ints(ingredients)
+            queryset = queryset.filter(ingredients__id__in=ingredient_ids)
+
         # Call specific user
         # Retrive all object then filter by user (must optimize ?)
         # We want user manage only their recipe (create, view, update)
-        return self.queryset.filter(user=self.request.user).order_by('id')
+        # return self.queryset.filter(user=self.request.user).order_by('id')
+        # Update for multiple filter, use distinct for not duplicate
+        # recipe with same tag same ingredients (base on logic of our
+        # code above)
+        return queryset.filter(
+            user=self.request.user
+        ).order_by('id').distinct()
 
     # Override this method to let DRF call
     # for a particular action ?
@@ -94,16 +170,34 @@ class RecipeAPIViewSet(viewsets.ModelViewSet):
 
         # get_serializer take class in get_serializer_class that
         # we override to get Image serializer class for this action
-        serialier = self.get_serializer(recipe, data=request.data)
+        serializer = self.get_serializer(recipe, data=request.data)
 
         # Check if valid then save and response
-        if serialier.is_valid():
-            serialier.save()
-            return Response(data=serialier.data, status=status.HTTP_200_OK)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data=serializer.data, status=status.HTTP_200_OK)
 
-        return Response(serialier.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                name='Assigned to Recipes ?',
+                type=OpenApiTypes.INT,
+                # True/ False chack in id_assigned in get_queryset
+                # define specific options for making the request
+                # in API docs (just 2 different int values can assign
+                # to this particular API parameters)
+                # This for filter Recipes that
+                # has tag/ingredients or not (0, 1)
+                enum=(0, 1),
+                description="Filter tags/ingredient that assigned to Recipes?"
+            )
+        ]
+    )
+)
 # Implement basic CRUD so just leverage viewset
 # base class
 # GenericViewSet allow to mixin, it has view set
@@ -126,11 +220,34 @@ class BaseRecipeAtributeViewSet(mixins.ListModelMixin,
     # return only queryset object for authenticated
     # user by default.
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user).order_by('name')
+        """Filter queryset by authenticated user"""
+
+        # Bool to check if provided (like if else)
+        # if get default is 0 => failse
+        ids_assigned = bool(
+            # Set default value is 0 (of .get)
+            # If ids_assigned not provided, else not set is 0
+            int(self.request.query_params.get('ids_assigned', 0))
+        )
+
+        queryset = self.queryset
+
+        if ids_assigned:
+            # Remove null recipe in filter, when tag/ingredients
+            # assign to recipe in system, then we delete that recipe
+            # a tag/ingredients has no recipe associated with it
+            # still appear in listing (tag/ingredients) but
+            # by ManyToMany Field so recipe field set to null ?
+            queryset = queryset.filter(recipe__isnull=False)
+
+        return queryset.filter(
+            user=self.request.user
+        ).order_by('name').distinct()
 
 
 class TagViewSet(BaseRecipeAtributeViewSet):
     """Manage tags """
+
     serializer_class = serializers.TagSerializer
     queryset = Tag.objects.all()
 
