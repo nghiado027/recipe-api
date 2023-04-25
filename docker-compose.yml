@@ -14,6 +14,7 @@ services:
       args:
         - DEV=true
 
+    restart: always
     # map port from local pc to docker container
     # HOST_PORT:CONTAINER_PORT
     ports:
@@ -37,7 +38,8 @@ services:
       - DB_HOST=db
       - DB_NAME=devdb
       - DB_USER=devuser
-      - DB_PASS=123
+      - DB_PASS=123testchange
+      - DEBUG=1
 
     # Add depend on to make app wait for db service to start
     depends_on:
@@ -47,7 +49,7 @@ services:
   # just install a client to interact
   # db on django container
   db:
-    image: postgres:15-alpine
+    image: postgres:alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
 
@@ -55,7 +57,7 @@ services:
     environment:
       - POSTGRES_DB=devdb
       - POSTGRES_USER=devuser
-      - POSTGRES_PASSWORD=123
+      - POSTGRES_PASSWORD=123testchange
 
 # Set up volumnes docker
 volumes:
