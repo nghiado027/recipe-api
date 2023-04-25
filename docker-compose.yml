@@ -49,7 +49,7 @@ services:
   # just install a client to interact
   # db on django container
   db:
-    image: postgres:alpine
+    image: postgres:15-alpine
     volumes:
       - dev-db-data:/var/lib/postgresql/data
 
